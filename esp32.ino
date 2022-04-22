@@ -29,6 +29,8 @@ int input;
 //Are we currently connected?
 boolean connected = false;
 
+char packetBuffer[255]; //buffer to hold incoming packet
+
 
 Adafruit_MPU6050 mpu;
 //The udp library class
@@ -156,21 +158,34 @@ void loop() {
     Serial.println(" => Very bright");
   }
   delay(2000);
-
+  
   if (connected) {
     udp.beginPacket(udpAddress, udpPort);
     udp.printf("Seconds since boot: %u", millis() / 1000);
+    IPAddress remoteIp = udp.remoteIP();
+    const uint8_t buffer[50] = "test world";
+    //This initializes udp and transfer buffer
+    udp.beginPacket(udpAddress, udpPort);
+    udp.write(buffer, 11);
     udp.endPacket();
-    if (Serial.available()) {
+    //static_cast<void*>(memset(buffer, 0, 50) ;
+    //processing incoming packet, must be called before reading the buffer
+    udp.parsePacket();
+    //receive response from server, it will be HELLO WORLD
+    Serial.print("Server to client: ");
+    Serial.println((char *)buffer);
+    //Wait for 1 second
+    delay(1000);
+    /*if (Serial.available()) {
       //input = Serial.readStringUntil('\n');
       //Serial.println("input, " + input + "!");
       input = Serial.parseInt();
       Serial.println(input);
       //digitalWrite(BLUE_LED_PIN, input);  // Set GPIO22 active high
 
-    }
+    }*/
   }
-sensors_event_t a, g, temp;
+  sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
   /* Print out the values */
